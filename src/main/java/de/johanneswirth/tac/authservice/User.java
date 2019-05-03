@@ -1,5 +1,8 @@
 package de.johanneswirth.tac.authservice;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
     private String email;
     private String password;
