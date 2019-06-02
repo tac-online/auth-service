@@ -7,9 +7,13 @@ import de.johanneswirth.tac.authservice.services.RegisterService;
 import de.johanneswirth.tac.common.AuthenticationRequired;
 import de.johanneswirth.tac.common.DBUtils;
 import io.dropwizard.Application;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.discovery.DiscoveryBundle;
 import io.dropwizard.discovery.DiscoveryFactory;
 import io.dropwizard.jdbi3.JdbiFactory;
+import io.dropwizard.migrations.MigrationsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.jdbi.v3.core.Jdbi;
@@ -29,6 +33,17 @@ public class AuthServiceApp extends Application<AuthConfiguration> {
     }
 
     public void initialize(Bootstrap<AuthConfiguration> bootstrap) {
+        bootstrap.setConfigurationSourceProvider(
+                new SubstitutingSourceProvider(bootstrap.getConfigurationSourceProvider(),
+                        new EnvironmentVariableSubstitutor(true)
+                )
+        );
+        bootstrap.addBundle(new MigrationsBundle<AuthConfiguration>() {
+            @Override
+            public DataSourceFactory getDataSourceFactory(AuthConfiguration configuration) {
+                return configuration.getDataSourceFactory();
+            }
+        });
         //bootstrap.addBundle(discoveryBundle);
     }
 
@@ -40,7 +55,7 @@ public class AuthServiceApp extends Application<AuthConfiguration> {
         final Jdbi jdbi = factory.build(environment, config.getDataSourceFactory(), "mysql");
         jdbi.registerRowMapper(new PairMapperFactory());
 
-        DBUtils.initDB(jdbi);
+        //DBUtils.initDB(jdbi);
         //DBUtils.updateDB(jdbi, 0);
         environment.jersey().register(new LoginService(jdbi, utils));
         environment.jersey().register(new RegisterService(jdbi, utils));

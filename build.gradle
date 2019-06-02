@@ -19,9 +19,10 @@ repositories {
 
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'io.dropwizard', name: 'dropwizard-core', version: '1.3.8'
-    compile group: 'io.dropwizard', name: 'dropwizard-jdbi3', version: '1.3.8'
-    compile group: 'io.dropwizard', name: 'dropwizard-auth', version: '1.3.8'
+    compile group: 'io.dropwizard', name: 'dropwizard-core', version: '1.3.9'
+    compile group: 'io.dropwizard', name: 'dropwizard-jdbi3', version: '1.3.9'
+    compile group: 'io.dropwizard', name: 'dropwizard-auth', version: '1.3.9'
+    compile group: 'io.dropwizard', name: 'dropwizard-migrations', version: '1.3.9'
     compile group: 'io.dropwizard.modules', name: 'dropwizard-discovery', version: '1.3.0-1'
     compile group: 'de.johannes-wirth', name: 'tac-backend-common', version: '0.1'
     compile 'com.auth0:java-jwt:3.4.0'
@@ -37,8 +38,8 @@ jar {
     manifest { attributes 'Main-Class': 'de.johanneswirth.tac.authservice.AuthServiceApp' }
 }
 
-task copyConfig(type: Copy) {
-    from file("config.yml")
+task copyScript(type: Copy) {
+    from file("startup.sh")
     into file("build/install/")
 }
 
@@ -47,24 +48,17 @@ task excludeLibraries(type: Delete) {
 }
 
 dockerBuildImage.dependsOn excludeLibraries
-dockerBuildImage.dependsOn copyConfig
-
-task copySql(type: Copy) {
-    from file("sql/")
-    into file("build/install/sql/")
-}
-
-dockerBuildImage.dependsOn copySql
+dockerBuildImage.dependsOn copyScript
 
 docker {
     javaApplication {
-        baseImage = 'java:openjdk-8-jre'
+        baseImage = 'openjdk:8-jre-alpine'
         maintainer = 'Johannes Wirth "johannes-wirth@posteo.de"'
         ports = [8080, 8081]
         tag = rootProject.name + ":" + version
         exec {
-            defaultCommand 'server', 'config.yml'
-            entryPoint '/tac-auth-service/bin/tac-auth-service'
+            defaultCommand '/tac-auth-service/bin/startup.sh'
+            entryPoint 'sh'
         }
     }
 }
@@ -72,15 +66,14 @@ docker {
 task tagImage(type:Exec) {
     dependsOn dockerBuildImage
     //on windows:
-    commandLine 'cmd', '/c', 'docker tag ' + rootProject.name + ":" + version + " johannes-wirth.de:5001/" + rootProject.name + ":" + version
+    commandLine 'cmd', '/c', 'docker tag ' + rootProject.name + ":" + version + " registry.johannes-wirth.de/" + rootProject.name + ":" + version
 }
 
 task publishImage(type:Exec) {
     dependsOn tagImage
     //on windows:
-    commandLine 'cmd', '/c', 'docker push johannes-wirth.de:5001/' + rootProject.name + ":" + version
+    commandLine 'cmd', '/c', 'docker push registry.johannes-wirth.de/' + rootProject.name + ":" + version
 }
 
 
-dockerCreateDockerfile.addFile('config.yml', 'config.yml')
-dockerCreateDockerfile.addFile('sql/', 'sql/')
+dockerCreateDockerfile.addFile('startup.sh', '/tac-auth-service/bin/startup.sh')
