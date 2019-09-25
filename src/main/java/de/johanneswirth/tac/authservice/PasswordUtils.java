@@ -4,6 +4,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import io.dropwizard.lifecycle.Managed;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,14 +20,14 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
-import java.util.logging.Level;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import static de.johanneswirth.tac.common.Utils.LOGGER;
 import static de.johanneswirth.tac.common.Utils.loadPublic;
 
 public class PasswordUtils implements Managed {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(PasswordUtils.class);
 
     private static final Random RANDOM = new SecureRandom();
     private static final String ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -110,7 +112,7 @@ public class PasswordUtils implements Managed {
             publicKey = loadPublic(pubKey);
             privateKey = loadPrivate();
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
-            LOGGER.log(Level.SEVERE, "", e);
+            LOGGER.error("", e);
         }
     }
 

@@ -3,7 +3,6 @@ package de.johanneswirth.tac.authservice;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.db.DataSourceFactory;
-import io.dropwizard.discovery.DiscoveryFactory;
 import org.hibernate.validator.constraints.NotEmpty;
 
 import javax.validation.Valid;
@@ -48,19 +47,5 @@ public class AuthConfiguration extends Configuration {
     @JsonProperty("database")
     public DataSourceFactory getDataSourceFactory() {
         return database;
-    }
-
-    @Valid
-    @NotNull
-    private DiscoveryFactory discovery = new DiscoveryFactory();
-
-    @JsonProperty("discovery")
-    public DiscoveryFactory getDiscoveryFactory() {
-        return discovery;
-    }
-
-    @JsonProperty("discovery")
-    public void setDiscoveryFactory(DiscoveryFactory discoveryFactory) {
-        this.discovery = discoveryFactory;
     }
 }

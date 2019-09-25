@@ -1,23 +1,22 @@
 package de.johanneswirth.tac.authservice.services;
 
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.Timed;
 import de.johanneswirth.tac.authservice.AuthDAO;
 import de.johanneswirth.tac.authservice.PasswordUtils;
-import de.johanneswirth.tac.authservice.User;
-import de.johanneswirth.tac.common.Status;
+import de.johanneswirth.tac.common.IStatus;
+import org.hibernate.validator.constraints.NotEmpty;
 import org.jdbi.v3.core.Jdbi;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.logging.Level;
+import static de.johanneswirth.tac.common.SuccessStatus.OK;
 
-import static de.johanneswirth.tac.common.ServiceUtils.getResponse;
-import static de.johanneswirth.tac.common.Utils.LOGGER;
-
-@Path("auth/register")
+@Path("register")
 public class RegisterService {
-
-    private final String METHODS = "POST";
 
     private AuthDAO dao;
     private PasswordUtils utils;
@@ -30,30 +29,33 @@ public class RegisterService {
     @POST
     @Consumes({MediaType.APPLICATION_JSON})
     @Produces({MediaType.APPLICATION_JSON})
-    public Response register(User user) {
-        if (user == null) {
-            return getResponse(Status.ILLEGAL_PARAMETERS, METHODS);
-        }
-        try {
-            Status status;
-            if (dao.userExists(user.getEmail()) != 0) {
-                status = Status.USER_EXISTS;
-            } else {
-                String salt = utils.getSalt(30);
-                String password = utils.generateSecurePassword(user.getPassword(), salt);
-                dao.registerUser(user.getEmail(), password, salt);
-                status = Status.OK(utils.generateJWTToken(dao.getID(user.getEmail())));
-            }
-            return getResponse(status, METHODS);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Uncaught Exception", e);
-            return Response.serverError().build();
+    @Valid
+    @NotNull
+    @Timed
+    @ExceptionMetered
+    public IStatus<String> register(@Valid @NotNull User user) {
+        if (dao.userExists(user.username) != 0) {
+            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
+        } else {
+            String salt = utils.getSalt(30);
+            String password = utils.generateSecurePassword(user.password, salt);
+            dao.registerUser(user.username, user.email, password, salt);
+            return OK(utils.generateJWTToken(dao.getID(user.username)), 0);
         }
     }
 
     @OPTIONS
-    public Response options() {
-        return getResponse(null, METHODS);
+    public void options() {}
+
+    private static class User {
+        @NotEmpty
+        public String username;
+        @NotNull
+        public String email;
+        @NotEmpty
+        public String password;
+
+        public User() { }
     }
 
 }

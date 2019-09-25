@@ -18,15 +18,14 @@ repositories {
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile group: 'io.dropwizard', name: 'dropwizard-core', version: '1.3.9'
-    compile group: 'io.dropwizard', name: 'dropwizard-jdbi3', version: '1.3.9'
-    compile group: 'io.dropwizard', name: 'dropwizard-auth', version: '1.3.9'
-    compile group: 'io.dropwizard', name: 'dropwizard-migrations', version: '1.3.9'
-    compile group: 'io.dropwizard.modules', name: 'dropwizard-discovery', version: '1.3.0-1'
+    compile group: 'io.dropwizard', name: 'dropwizard-core', version: '1.3.14'
+    compile group: 'io.dropwizard', name: 'dropwizard-jdbi3', version: '1.3.14'
+    compile group: 'io.dropwizard', name: 'dropwizard-auth', version: '1.3.14'
+    compile group: 'io.dropwizard', name: 'dropwizard-migrations', version: '1.3.14'
     compile group: 'de.johannes-wirth', name: 'tac-backend-common', version: '0.1'
-    compile 'com.auth0:java-jwt:3.4.0'
-    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.15'
+    compile 'com.auth0:java-jwt:3.8.2'
+    compile group: 'mysql', name: 'mysql-connector-java', version: '8.0.17'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 jar {
@@ -35,7 +34,7 @@ jar {
         exclude "META-INF/*.DSA"
         exclude "META-INF/*.RSA"
     }
-    manifest { attributes 'Main-Class': 'de.johanneswirth.tac.authservice.AuthServiceApp' }
+    manifest { attributes 'Main-Class': mainClassName }
 }
 
 task copyScript(type: Copy) {
@@ -57,7 +56,7 @@ docker {
         ports = [8080, 8081]
         tag = rootProject.name + ":" + version
         exec {
-            defaultCommand '/tac-auth-service/bin/startup.sh'
+            defaultCommand 'startup.sh'
             entryPoint 'sh'
         }
     }
@@ -76,4 +75,4 @@ task publishImage(type:Exec) {
 }
 
 
-dockerCreateDockerfile.addFile('startup.sh', '/tac-auth-service/bin/startup.sh')
+dockerCreateDockerfile.addFile('startup.sh', 'startup.sh')
