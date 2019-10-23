@@ -13,6 +13,8 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import static de.johanneswirth.tac.common.ErrorStatus.AUTHENTICATION_ERROR;
 import static de.johanneswirth.tac.common.SuccessStatus.OK;
 
 @Path("register")
@@ -35,7 +37,7 @@ public class RegisterService {
     @ExceptionMetered
     public IStatus<String> register(@Valid @NotNull User user) {
         if (dao.userExists(user.username) != 0) {
-            throw new WebApplicationException(Response.Status.UNAUTHORIZED);
+            return AUTHENTICATION_ERROR;
         } else {
             String salt = utils.getSalt(30);
             String password = utils.generateSecurePassword(user.password, salt);

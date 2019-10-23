@@ -17,6 +17,9 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Random;
@@ -99,11 +102,19 @@ public class PasswordUtils implements Managed {
 
     public String generateJWTToken(int subject) throws JWTCreationException {
         Algorithm algorithm = Algorithm.RSA256(publicKey, privateKey);
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime exp = now.plusDays(7);
         String token = JWT.create()
                 .withIssuer("tac-server")
                 .withSubject(subject + "")
+                .withIssuedAt(toDate(now))
+                .withExpiresAt(toDate(exp))
                 .sign(algorithm);
         return token;
+    }
+
+    private Date toDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
     @Override
